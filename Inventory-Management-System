@@ -1,0 +1,171 @@
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.table.DefaultTableModel;
+
+@SuppressWarnings("serial")
+public class InventryManagementSystem extends JFrame implements ActionListener {
+
+    // GUI Components
+    private JTextField txtProductName, txtProductPrice, txtProductQuantity;
+    private JButton btnAddProduct, btnUpdateStock, btnPlaceOrder;
+    private JTable stockTable;
+    private DefaultTableModel tableModel;
+
+    // Constructor
+    public InventryManagementSystem() {
+        setTitle("Order Management System");
+        setSize(600, 500);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // North Panel - Input Fields (Updated layout)
+        JPanel northPanel = new JPanel(new GridLayout(6, 1, 5, 5)); // 6 rows, 1 column, spacing
+
+        // Product Name
+        JPanel productNamePanel = new JPanel(new BorderLayout());
+        productNamePanel.add(new JLabel("Product Name:"), BorderLayout.WEST);
+        txtProductName = new JTextField();
+        productNamePanel.add(txtProductName, BorderLayout.CENTER);
+        northPanel.add(productNamePanel);
+
+        // Product Price
+        JPanel productPricePanel = new JPanel(new BorderLayout());
+        productPricePanel.add(new JLabel("Product Price:"), BorderLayout.WEST);
+        txtProductPrice = new JTextField();
+        productPricePanel.add(txtProductPrice, BorderLayout.CENTER);
+        northPanel.add(productPricePanel);
+
+        // Product Quantity
+        JPanel productQuantityPanel = new JPanel(new BorderLayout());
+        productQuantityPanel.add(new JLabel("Product Quantity:"), BorderLayout.WEST);
+        txtProductQuantity = new JTextField();
+        productQuantityPanel.add(txtProductQuantity, BorderLayout.CENTER);
+        northPanel.add(productQuantityPanel);
+
+        // Add Product Button
+        btnAddProduct = new JButton("Add Product");
+        btnAddProduct.addActionListener(this);
+        northPanel.add(btnAddProduct);
+
+        // Update Stock Button
+        btnUpdateStock = new JButton("Update Stock");
+        btnUpdateStock.addActionListener(this);
+        northPanel.add(btnUpdateStock);
+
+        // Place Order Button
+        btnPlaceOrder = new JButton("Place Order");
+        btnPlaceOrder.addActionListener(this);
+        northPanel.add(btnPlaceOrder);
+
+        add(northPanel, BorderLayout.NORTH);
+
+        // Center Panel - Stock Table
+        String[] columnNames = {"Product Name", "Price", "Quantity"};
+        tableModel = new DefaultTableModel(columnNames, 0);
+        stockTable = new JTable(tableModel);
+        add(new JScrollPane(stockTable), BorderLayout.CENTER);
+
+        // Set the frame visible
+        setVisible(true);
+    }
+
+    // Action Event Handling
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == btnAddProduct) {
+            addProduct();
+        } else if (e.getSource() == btnUpdateStock) {
+            updateStock();
+        } else if (e.getSource() == btnPlaceOrder) {
+            placeOrder();
+        }
+    }
+
+    // Method to add product
+    private void addProduct() {
+        String productName = txtProductName.getText();
+        String productPrice = txtProductPrice.getText();
+        String productQuantity = txtProductQuantity.getText();
+
+        if (productName.isEmpty() || productPrice.isEmpty() || productQuantity.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill all fields");
+            return;
+        }
+
+        try {
+            double price = Double.parseDouble(productPrice);
+            int quantity = Integer.parseInt(productQuantity);
+            tableModel.addRow(new Object[]{productName, price, quantity});
+            clearFields();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid input for price or quantity");
+        }
+    }
+
+    // Method to update stock quantity
+    private void updateStock() {
+        int selectedRow = stockTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a product to update");
+            return;
+        }
+
+        String newQuantity = JOptionPane.showInputDialog(this, "Enter new quantity:");
+        try {
+            int quantity = Integer.parseInt(newQuantity);
+            tableModel.setValueAt(quantity, selectedRow, 2);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid input for quantity");
+        }
+    }
+
+    // Method to place an order
+    private void placeOrder() {
+        int selectedRow = stockTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a product to order");
+            return;
+        }
+
+        String productName = (String) tableModel.getValueAt(selectedRow, 0);
+        int currentStock = (int) tableModel.getValueAt(selectedRow, 2);
+
+        String orderQuantityStr = JOptionPane.showInputDialog(this, "Enter quantity to order:");
+        try {
+            int orderQuantity = Integer.parseInt(orderQuantityStr);
+
+            if (orderQuantity > currentStock) {
+                JOptionPane.showMessageDialog(this, "Insufficient stock for " + productName);
+            } else {
+                tableModel.setValueAt(currentStock - orderQuantity, selectedRow, 2);
+                JOptionPane.showMessageDialog(this, "Order placed for " + orderQuantity + " units of " + productName);
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid input for quantity");
+        }
+    }
+
+    // Clear input fields
+    private void clearFields() {
+        txtProductName.setText("");
+        txtProductPrice.setText("");
+        txtProductQuantity.setText("");
+    }
+
+    // Main Method
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new InventryManagementSystem());
+    }
+}
